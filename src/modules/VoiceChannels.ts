@@ -55,6 +55,14 @@ export class VoiceChannels extends AbstractModule {
             return;
         }
 
+        if (settings.fromCategoryOnly && (
+            msg.channel.type != "text" || 
+            msg.channel.parent == null || 
+            msg.channel.parent.id != settings.voiceCategoryId
+        )) {
+            return;
+        }
+
         if (msg.member.voice.channelID == null) {
             msg.reply('You must be in a voice channel to create a custom one');
             return;
@@ -96,19 +104,42 @@ export class VoiceChannels extends AbstractModule {
         switch(args.shift().toLowerCase()) {
             case 'category':
                 this.handleCategory(db, server, msg, args);
-                break;
+                return;
             case 'joinchannel':
                 this.handleJoinChannel(db, server, msg, args);
-                break;
+                return;
+            case 'fromcategoryonly':
+                this.handleCategoryOnly(db, server, msg, args);
+                return;
         }
+
+        this.showManagerHelp(server, msg);
     }
 
     showManagerHelp(server: Server, msg: Discord.Message) {
         msg.reply([
             ``,
             `${server.prefix}voicemanager category <categoryId|clear>`,
-            `${server.prefix}voicemanager joinChannel <channelId|clear>`
+            `${server.prefix}voicemanager joinChannel <channelId|clear>`,
+            `${server.prefix}voicemanager fromCategoryOnly <true|false>`
         ])
+    }
+
+    handleCategoryOnly(db: Db, server: Server, msg: Discord.Message, args: string[]) {
+        if (args.length < 1 || (args[0] != "true" && args[0] != "false")) {
+            msg.reply(`Usage: ${server.prefix}voicemanager fromCategoryOnly <true|false>`);
+            return;
+        }
+        
+        let fromCategoryOnly = args[0] == "true";
+        server.settings("voice").fromCategoryOnly = fromCategoryOnly;
+        server.update(db);
+
+        if (fromCategoryOnly) {
+            msg.reply(`${server.prefix}voice can now only be accessed from text channels in the linked category`);
+        } else {
+            msg.reply(`${server.prefix}voice can now be accessed from everywhere`);
+        }
     }
 
 
