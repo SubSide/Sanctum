@@ -98,7 +98,11 @@ function handleCommand(db: Db, server: Server, msg: Discord.Message) {
 
     // If the module exists we want to make it handle our command
     if (modules != null && commandObj != null) {
-        module.handleCommand(db as Db, server, msg, commandObj, args);
+        if (msg.member.hasPermission(commandObj.permissions)) {
+            module.handleCommand(db as Db, server, msg, commandObj, args);
+        } else {
+            msg.reply('You do not have permission to use this command.');
+        } 
     }
 }
 

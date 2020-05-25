@@ -1,3 +1,5 @@
+import Discord from "discord.js";
+
 export class Command {
     
     public commandList: String[];
@@ -6,7 +8,7 @@ export class Command {
         public command: String, 
         public info: String, 
         public aliases: String[] = [],
-        public permissions: number = 0
+        public permissions: number = Discord.Permissions.FLAGS.ADMINISTRATOR
     ) {
         this.commandList = [...aliases];
         this.commandList.unshift(command);

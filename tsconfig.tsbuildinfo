@@ -167,7 +167,7 @@
         "affectsGlobalScope": true
       },
       "./src/core/command.ts": {
-        "version": "3c7e18c84edaccec87b78ba1df70fef9685932f917302f93253453174ced67af",
+        "version": "b165375bdde3420d3d8a64107d9b5b7793b1370b8dc89f095274970a5c915cf8",
         "signature": "3627614c0442a84e9d74f97614f17355420adb694e176aafebcd1d49f7eef670",
         "affectsGlobalScope": false
       },
@@ -432,7 +432,7 @@
         "affectsGlobalScope": false
       },
       "./src/models/server.ts": {
-        "version": "1c5d05ccd9d26a9472724ad987f3991e841b52bb6c99d9979a3cedee93360a8d",
+        "version": "a5ee20b9b6dedd0043900663b2f0c6cd9aebcd1a19cef2aef0ee5968e40c33fa",
         "signature": "274b1fcfe0e900bf59bbb88735b73a3213095a1ecdfc240f20c6a893777b0cef",
         "affectsGlobalScope": false
       },
@@ -442,17 +442,17 @@
         "affectsGlobalScope": false
       },
       "./src/index.ts": {
-        "version": "1c9f5653f20b13d8c2220fb6981fbf5ad3ab648618821c080f5cc489551c950c",
+        "version": "67ec188d885e19ba0042ded2cabdc2c0270e964e37a4dcedfed02e1e40e16711",
         "signature": "f761c91419d0a89422a0004ef1a92929dd4d2d5e5c16758654d8b0467d1998c6",
         "affectsGlobalScope": false
       },
       "./src/modules/sanctum.ts": {
-        "version": "aa193b743895173ab956a4175b1b7d4dd4ae1617c171b99553e16ba1e7856af9",
+        "version": "2a475e08b2ba59dd4cb1b5f9d50aa7da03078272e3c74b05cc48c8dfe0453c63",
         "signature": "899f915695ebde87f52a6ff5e648dd7a3b239f86f5ffa4ece89f83ec0154ea0f",
         "affectsGlobalScope": false
       },
       "./src/modules/voicechannels.ts": {
-        "version": "60db5d11f4d4882363e70af3bc160fbf43c9eed68b81ac4148fbdc82d9ab1bbb",
+        "version": "fd9f98b7daa4d1b0cd3c49dcfa351e6b5fdd20279698d7b5535413bdebed30ed",
         "signature": "07162fcfa57648a6b9b7c58a2cda11dc708c3421e7e64b948c4cd06a4bb3887c",
         "affectsGlobalScope": false
       }
@@ -1104,7 +1104,8 @@
         "./node_modules/@types/node/fs.d.ts",
         "./node_modules/@types/node/ts3.2/fs.d.ts",
         "./node_modules/@types/node/ts3.2/util.d.ts",
-        "./node_modules/@types/node/util.d.ts"
+        "./node_modules/@types/node/util.d.ts",
+        "./node_modules/discord.js/typings/index.d.ts"
       ],
       "./src/index.ts": [
         "./node_modules/@types/mongodb/index.d.ts",
