@@ -56,8 +56,10 @@ const connection = MongoDb.MongoClient.connect(MONGODB_URL, { useUnifiedTopology
         });
 
         bot.on('guildDelete', guild => {
-            (db as Db).collection('servers').deleteOne({ guildId: guild.id });
-            console.debug(`We got deleted from "${guild.name}" so we're removing it from our database.`);
+            Server.get(db as Db, guild.id).then(server => {
+                server.delete(db as Db);
+                console.debug(`We got kicked from "${guild.name}" so we're removing it from our database.`);
+            });
         });
 
         bot.on('message', msg => {
