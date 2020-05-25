@@ -63,14 +63,18 @@ export class VoiceChannels extends AbstractModule {
             return;
         }
 
-        if (msg.member.voice.channelID == null) {
-            msg.reply('You must be in a voice channel to create a custom one');
+        if (settings.voiceJoinChannelId != null && (
+                msg.member.voice == null ||
+                msg.member.voice.channelID == null ||
+                settings.voiceJoinChannelId != msg.member.voice.channelID
+        )) {
+            let joinChannel = msg.guild.channels.resolve(settings.voiceJoinChannelId);
+            msg.reply(`You must be connected to "${joinChannel.name}" to create a custom voice channel!`);
             return;
         }
 
-        if (settings.voiceJoinChannelId != null && settings.voiceJoinChannelId != msg.member.voice.channelID) {
-            let joinChannel = msg.guild.channels.resolve(settings.voiceJoinChannelId);
-            msg.reply(`You must be in "${joinChannel.name}" to create a voice channel!`);
+        if (msg.member.voice == null || msg.member.voice.channelID == null) {
+            msg.reply('You must be in a voice channel to create a custom one');
             return;
         }
         
