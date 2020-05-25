@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { Permissions } from 'discord.js';
 import {AbstractModule} from '../core/AbstractModule';
 import {Command} from '../core/Command';
 import {Server} from '../models/Server';
@@ -12,12 +12,17 @@ export class VoiceChannels extends AbstractModule {
                 .then(
                     server => {
                         let settings = server.settings("voice");
+
                         if (
                             oldState.channel != null &&
                             oldState.channel.parent != null &&
                             oldState.channel.id != settings.voiceJoinChannelId &&
                             oldState.channel.parent.id == settings.voiceCategoryId && 
-                            oldState.channel.members.size < 1
+                            oldState.channel.members.size < 1 &&
+                            (
+                                settings.snapshot == null || !Array.isArray(settings.snapshot) ||
+                                !(settings.snapshot as string[]).includes(oldState.channel.id)
+                            )
                         ) {
                             let channelName = oldState.channel.name;
                             
@@ -92,10 +97,17 @@ export class VoiceChannels extends AbstractModule {
         }
 
         if (!msg.guild.me.permissionsIn(parentChannel).has(
-            Discord.Permissions.FLAGS.MANAGE_CHANNELS |
-            Discord.Permissions.FLAGS.MOVE_MEMBERS
+            Permissions.FLAGS.MANAGE_CHANNELS |
+            Permissions.FLAGS.MOVE_MEMBERS
         )) {
             msg.reply(`Whoops, I need the 'Manage channels' and 'Move members' permissions for the category "${parentChannel.name}"`);
+            return;
+        }
+
+        if (!msg.guild.me.permissionsIn(msg.member.voice.channel).has(
+            Permissions.FLAGS.MOVE_MEMBERS
+        )) {
+            msg.reply(`I can't move you out if the channel you're currently in :(`);
             return;
         }
 
@@ -128,6 +140,10 @@ export class VoiceChannels extends AbstractModule {
             case 'fromcategoryonly':
                 this.handleCategoryOnly(db, server, msg, args);
                 return;
+            case 'snapshot':
+                this.handleSnapshot(db, server, msg, args);
+                return;
+
         }
 
         this.showManagerHelp(server, msg);
@@ -136,9 +152,10 @@ export class VoiceChannels extends AbstractModule {
     showManagerHelp(server: Server, msg: Discord.Message) {
         msg.reply([
             ``,
-            `${server.prefix}voicemanager category <categoryId|clear>`,
-            `${server.prefix}voicemanager joinChannel <channelId|clear>`,
-            `${server.prefix}voicemanager fromCategoryOnly <true|false>`
+            `${server.prefix}voicemanager category <categoryId|clear> - Set a category to create channels in`,
+            `${server.prefix}voicemanager joinChannel <channelId|clear> - Set a category where you need to be connected to. (clear to join from anywhere)`,
+            `${server.prefix}voicemanager fromCategoryOnly <true|false> - ${server.prefix}voice only works in the category (clear to create from anywhere)`,
+            `${server.prefix}voicemanager snapshot - Creates a snapshot of the category. We leave all channels from this snapshot alone.`
         ])
     }
 
@@ -220,5 +237,22 @@ export class VoiceChannels extends AbstractModule {
                 },
                 err => msg.reply(`Something went wrong: ${err}`)
             );
+    }
+
+    handleSnapshot(db: Db, server: Server, msg: Discord.Message, args: String[]) {
+        let settings = server.settings("voice");
+        
+        let parentChannel = msg.guild.channels.resolve(settings.voiceCategoryId);
+        if (parentChannel == null || parentChannel.type != "category") {
+            msg.reply(`You have not yet set up a voice category. Do that first with ${server.prefix}voicemanager category <categoryId>`);
+            return;
+        }
+
+        settings.snapshot = (parentChannel as Discord.CategoryChannel).children
+            .filter(channel => channel.type == "voice")
+            .map(channel => channel.id)
+
+        server.update(db);
+        msg.reply(`I made a snapshot of the category, will not remove currently existing channels in the category!`);
     }
 }
