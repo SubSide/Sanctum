@@ -42,11 +42,11 @@ const connection = MongoDb.MongoClient.connect(MONGODB_URL, { useUnifiedTopology
 
 
         // Create and add all the modules
+        modules.push(sanctumModule);
         modulePaths.forEach(path => {
             let module = require(path);
             modules.push(new (module[Object.keys(module)[0]])())
         });
-        modules.push(sanctumModule);
 
         // Initialize all the modules
         modules.forEach(module => module.init(bot, db as Db));
@@ -72,8 +72,9 @@ const connection = MongoDb.MongoClient.connect(MONGODB_URL, { useUnifiedTopology
                         return;
                     }
                     // We check if it is the correct prefix
-                    if (msg.content.startsWith(server.prefix))
-                        handleCommand(db as Db, server, msg)
+                    if (msg.content.startsWith(server.prefix)) {
+                        handleCommand(db as Db, server, msg);
+                    }
                 },
                 err => console.debug(`Error getting the server: ${err}`, err)
             );
@@ -89,6 +90,13 @@ function handleCommand(db: Db, server: Server, msg: Discord.Message) {
     const args = msg.content.trim().split(' ');
     // Pop the first arg as it is our command
     const command = args.shift().toLowerCase().substr(server.prefix.length);
+
+    if (command == 'help') {
+        showHelp(server, msg);
+        return;
+    }
+
+
     var module: AbstractModule = null;
     var commandObj: Command = null;
 
@@ -117,3 +125,20 @@ function handleCommand(db: Db, server: Server, msg: Discord.Message) {
     }
 }
 
+function showHelp(server: Server, msg: Discord.Message) {
+    let user = msg.member;
+    let help = [];
+
+    help.push(' ');
+    help.push(`${server.prefix}help - Shows this list`);
+
+    modules.forEach(module => {
+        module.commands.forEach(cmd => {
+            if (user.hasPermission(cmd.permissions)) {
+                help.push(`${server.prefix}${cmd.command} - ${cmd.info}`);
+            }
+        });
+    });
+
+    msg.reply(help);
+}

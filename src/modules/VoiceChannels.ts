@@ -34,8 +34,8 @@ export class VoiceChannels extends AbstractModule {
 
     getCommands() {
         return [
-            new Command('voicemanager', 'Providing a channelId will allow you to set the category to create voice channels in'),
-            new Command('voice', 'Allows you to create voice channels (you need to be in a voice channel to do so)', [], 0)
+            new Command('voicemanager', 'manages the voice module'),
+            new Command('voice', 'Allows you to create custom voice channels', [], 0)
         ]
     }
 
