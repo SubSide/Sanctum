@@ -5,7 +5,7 @@ import {Server} from '../models/Server';
 import { Db } from 'mongodb';
 
 
-export class VoiceChannels extends AbstractModule {
+export class ChannelManager extends AbstractModule {
     init(bot: Discord.Client, db: Db) {
         bot.on('voiceStateUpdate', (oldState: Discord.VoiceState, newState: Discord.VoiceState) => {
             Server.get(db, oldState.guild.id)
@@ -39,13 +39,13 @@ export class VoiceChannels extends AbstractModule {
 
     getCommands() {
         return [
-            new Command('voicemanager', 'manages the voice module'),
+            new Command('channelmanager', 'manages the channel module'),
             new Command('voice', 'Allows you to create custom voice channels', [], 0)
         ]
     }
 
     handleCommand(db: Db, server: Server, msg: Discord.Message, cmd: Command, args: string[]) {
-        if (cmd.command === 'voicemanager') {
+        if (cmd.command === 'channelmanager') {
             this.handleManager(db, server, msg, args);
         } else if (cmd.command === 'voice') {
             this.handleVoice(db, server, msg, cmd, args);
@@ -107,7 +107,7 @@ export class VoiceChannels extends AbstractModule {
         if (!msg.guild.me.permissionsIn(msg.member.voice.channel).has(
             Permissions.FLAGS.MOVE_MEMBERS
         )) {
-            msg.reply(`I can't move you out if the channel you're currently in :(`);
+            msg.reply(`I don't have permission to move you out of the channel you're currently in :(`);
             return;
         }
 
@@ -152,16 +152,16 @@ export class VoiceChannels extends AbstractModule {
     showManagerHelp(server: Server, msg: Discord.Message) {
         msg.reply([
             ``,
-            `${server.prefix}voicemanager category <categoryId|clear> - Set a category to create channels in`,
-            `${server.prefix}voicemanager joinChannel <channelId|clear> - Set a category where you need to be connected to. (clear to join from anywhere)`,
-            `${server.prefix}voicemanager fromCategoryOnly <true|false> - ${server.prefix}voice only works in the category (clear to create from anywhere)`,
-            `${server.prefix}voicemanager snapshot - Creates a snapshot of the category. We leave all channels from this snapshot alone.`
+            `${server.prefix}channelmanager category <categoryId|clear> - Set a category to create channels in`,
+            `${server.prefix}channelmanager joinChannel <channelId|clear> - Set a category where you need to be connected to. (clear to join from anywhere)`,
+            `${server.prefix}channelmanager fromCategoryOnly <true|false> - ${server.prefix}voice only works in the category (clear to create from anywhere)`,
+            `${server.prefix}channelmanager snapshot - Creates a snapshot of the category. We leave all channels from this snapshot alone.`
         ])
     }
 
     handleCategoryOnly(db: Db, server: Server, msg: Discord.Message, args: string[]) {
         if (args.length < 1 || (args[0] != "true" && args[0] != "false")) {
-            msg.reply(`Usage: ${server.prefix}voicemanager fromCategoryOnly <true|false>`);
+            msg.reply(`Usage: ${server.prefix}channelmanager fromCategoryOnly <true|false>`);
             return;
         }
         
@@ -180,7 +180,7 @@ export class VoiceChannels extends AbstractModule {
     handleCategory(db: Db, server: Server, msg: Discord.Message, args: string[]) {
         let settings = server.settings("voice");
         if (args.length < 1) {
-            msg.reply(`Usage: ${server.prefix}voicemanager category <categoryId|clear>`);
+            msg.reply(`Usage: ${server.prefix}channelmanager category <categoryId|clear>`);
             return;
         }
 
@@ -211,7 +211,7 @@ export class VoiceChannels extends AbstractModule {
     handleJoinChannel(db: Db, server: Server, msg: Discord.Message, args: String[]) {
         let settings = server.settings("voice");
         if (args.length < 1) {
-            msg.reply(`Usage: ${server.prefix}voicemanager joinChannel <channelId|clear>`);
+            msg.reply(`Usage: ${server.prefix}channelmanager joinChannel <channelId|clear>`);
             return;
         }
 
@@ -244,7 +244,7 @@ export class VoiceChannels extends AbstractModule {
         
         let parentChannel = msg.guild.channels.resolve(settings.voiceCategoryId);
         if (parentChannel == null || parentChannel.type != "category") {
-            msg.reply(`You have not yet set up a voice category. Do that first with ${server.prefix}voicemanager category <categoryId>`);
+            msg.reply(`You have not yet set up a voice category. Do that first with ${server.prefix}channelmanager category <categoryId>`);
             return;
         }
 

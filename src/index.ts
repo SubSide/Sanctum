@@ -15,7 +15,7 @@ const modules: AbstractModule[] = [];
 const sanctumModule = new Sanctum();
 
 const modulePaths = [
-    './modules/VoiceChannels.js'
+    './modules/ChannelManager.js'
 ];
 
 
