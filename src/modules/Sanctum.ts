@@ -21,9 +21,12 @@ export class Sanctum extends AbstractModule {
             return;
         }
 
-        switch (args[0]) {
+        switch (args[0].toLowerCase()) {
             case 'prefix':
                 this.handlePrefix(db, server, message, cmd, args);
+                return;
+            case 'maintenance':
+                this.handleMaintenance(server, message, args);
                 return;
         }
         
@@ -31,7 +34,37 @@ export class Sanctum extends AbstractModule {
     }
 
     showHelp(server: Server, message: Discord.Message) {
-        message.reply(`Use "${server.prefix}sanctum prefix <prefix>" to change the default prefix to something else`);
+        message.reply([
+            ` `,
+            `${server.prefix}sanctum prefix <prefix> - Change the default prefix to something else`
+        ]);
+    }
+
+    handleMaintenance(server: Server, message: Discord.Message, args: string[]) {
+        args.shift(); // Removes the first element
+        if (message.member.id !== "133653989215436800") {
+            message.reply(`Only bot administrators can use this command`);
+            return;
+        }
+
+        if (args.length < 1) {
+            message.reply([
+                ` `,
+                `${server.prefix}sanctum maintenance update - Restarts the bot. Update if any are available.`
+            ])
+            return;
+        }
+
+        switch (args[0].toLowerCase()) {
+            case 'update':
+                console.warn(`Restart is called by ${message.member.user.tag}`);
+
+                message.reply(`Restarting the bot, see you soon :)`).then(() => {
+                    process.exit();
+                });
+
+                return;
+        }
     }
 
     handlePrefix(db: Db, server: Server, message: Discord.Message, cmd: Command, args: string[]) {
