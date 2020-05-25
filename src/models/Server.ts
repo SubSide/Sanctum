@@ -4,13 +4,24 @@ export class Server {
     constructor(
         public guildId: string,
         public prefix: string = '!',
-        public voiceCategoryId: string = null
+        public modules: any = {}
     ) {}
 
 
     loadInto(obj: any) {
         this.prefix = obj.prefix;
-        this.voiceCategoryId = obj.voiceCategoryId;
+        this.modules = obj.modules
+    }
+    
+    public settings(module: string): any {
+        if (this.modules == null) {
+            this.modules = {};
+        }
+        if (this.modules[module] == null) {
+            this.modules[module] = {};
+        }
+
+        return this.modules[module];
     }
 
     public async update(db: Db): Promise<void> {
@@ -20,7 +31,7 @@ export class Server {
                 {
                     $set: {
                         prefix: this.prefix,
-                        voiceCategoryId: this.voiceCategoryId
+                        modules: this.modules
                     }
                 },
                 {

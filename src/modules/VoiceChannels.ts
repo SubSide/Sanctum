@@ -11,10 +11,12 @@ export class VoiceChannels extends AbstractModule {
             Server.get(db, oldState.guild.id)
                 .then(
                     server => {
+                        let settings = server.settings("voice");
                         if (
                             oldState.channel != null &&
                             oldState.channel.parent != null &&
-                            oldState.channel.parent.id == server.voiceCategoryId && 
+                            oldState.channel.id != settings.voiceJoinChannelId &&
+                            oldState.channel.parent.id == settings.voiceCategoryId && 
                             oldState.channel.members.size < 1
                         ) {
                             let channelName = oldState.channel.name;
@@ -37,53 +39,30 @@ export class VoiceChannels extends AbstractModule {
         ]
     }
 
-    handleCommand(db: Db, server: Server, msg: Discord.Message, cmd: Command, args: String[]) {
+    handleCommand(db: Db, server: Server, msg: Discord.Message, cmd: Command, args: string[]) {
         if (cmd.command === 'voicemanager') {
-            this.handleCategory(db, server, msg, cmd, args);
+            this.handleManager(db, server, msg, args);
         } else if (cmd.command === 'voice') {
             this.handleVoice(db, server, msg, cmd, args);
         }
     }
 
-    handleCategory(db: Db, server: Server, msg: Discord.Message, cmd: Command, args: String[]) {
-        if (args.length < 1) {
-            msg.reply('You need to provide a valid categoryId (Right click a category -> Copy ID), or "clear" to clear it');
-            return;
-        }
+    handleVoice(db: Db, server: Server, msg: Discord.Message, cmd: Command, args: string[]) {
+        let settings = server.settings("voice");
 
-        if (args[0] == "clear") {
-            server.voiceCategoryId = null;
-            server.update(db);
-            msg.reply('Cleared the linked category');
-            return;
-        }
-
-        let channel = msg.guild.channels.resolve(args.join(' '));
-        if (channel === null || channel.type !== 'category') {
-            msg.reply('You need to provide a valid categoryId (Right click a category -> Copy ID), or "clear" to clear it');
-            return;
-        }
-
-        server.voiceCategoryId = channel.id;
-        server.update(db)
-            .then(
-                () => {
-                    console.debug(`Set category "${channel.name}" as voice category on server "${channel.guild.name}"`);
-                    msg.reply("Linked category");
-                },
-                err => msg.reply(`Something went wrong: ${err}`)
-            );
-    }
-
-      handleVoice(db: Db, server: Server, msg: Discord.Message, cmd: Command, args: String[]) {
-        
-        if (server.voiceCategoryId == null) {
+        if (settings.voiceCategoryId == null) {
             msg.reply('The server admins haven\'t set a voice category yet!');
             return;
         }
 
         if (msg.member.voice.channelID == null) {
             msg.reply('You must be in a voice channel to create a custom one');
+            return;
+        }
+
+        if (settings.voiceJoinChannelId != null && settings.voiceJoinChannelId != msg.member.voice.channelID) {
+            let joinChannel = msg.guild.channels.resolve(settings.voiceJoinChannelId);
+            msg.reply(`You must be in "${joinChannel.name}" to create a voice channel!`);
             return;
         }
         
@@ -93,7 +72,7 @@ export class VoiceChannels extends AbstractModule {
         }
         
         let channelName = args.join(' '); 
-        let parentChannel = msg.guild.channels.resolve(server.voiceCategoryId);
+        let parentChannel = msg.guild.channels.resolve(settings.voiceCategoryId);
 
         msg.guild.channels.create(channelName, { 
             type: 'voice',
@@ -106,5 +85,92 @@ export class VoiceChannels extends AbstractModule {
             },
             error => msg.reply(`Something went wrong creating a channel for you :( (${error})`)
         );
+    }
+
+    handleManager(db: Db, server: Server, msg: Discord.Message, args: string[]) {
+        if (args.length < 1) {
+            this.showManagerHelp(server, msg);
+            return;
+        }
+
+        switch(args.shift().toLowerCase()) {
+            case 'category':
+                this.handleCategory(db, server, msg, args);
+                break;
+            case 'joinchannel':
+                this.handleJoinChannel(db, server, msg, args);
+                break;
+        }
+    }
+
+    showManagerHelp(server: Server, msg: Discord.Message) {
+        msg.reply([
+            ``,
+            `${server.prefix}voicemanager category <categoryId|clear>`,
+            `${server.prefix}voicemanager joinChannel <channelId|clear>`
+        ])
+    }
+
+
+    handleCategory(db: Db, server: Server, msg: Discord.Message, args: string[]) {
+        let settings = server.settings("voice");
+        if (args.length < 1) {
+            msg.reply(`Usage: ${server.prefix}voicemanager category <categoryId|clear>`);
+            return;
+        }
+
+        if (args[0] == "clear") {
+            settings.voiceCategoryId = null;
+            server.update(db);
+            msg.reply('Cleared the linked category');
+            return;
+        }
+
+        let channel = msg.guild.channels.resolve(args.join(' '));
+        if (channel === null || channel.type !== 'category') {
+            msg.reply('You need to provide a valid categoryId (Right click a category -> Copy ID), or "clear" to clear it');
+            return;
+        }
+
+        settings.voiceCategoryId = channel.id;
+        server.update(db)
+            .then(
+                () => {
+                    console.debug(`Set category "${channel.name}" as voice category on server "${channel.guild.name}"`);
+                    msg.reply("Linked category");
+                },
+                err => msg.reply(`Something went wrong: ${err}`)
+            );
+    }
+
+    handleJoinChannel(db: Db, server: Server, msg: Discord.Message, args: String[]) {
+        let settings = server.settings("voice");
+        if (args.length < 1) {
+            msg.reply(`Usage: ${server.prefix}voicemanager joinChannel <channelId|clear>`);
+            return;
+        }
+
+        if (args[0] == "clear") {
+            settings.voiceJoinChannelId = null;
+            server.update(db);
+            msg.reply('Cleared the linked join channel');
+            return;
+        }
+
+        let channel = msg.guild.channels.resolve(args.join(' '));
+        if (channel === null || channel.type !== 'voice') {
+            msg.reply('You need to provide a valid voice channel id (Right click a voice channel -> Copy ID), or "clear" to clear it');
+            return;
+        }
+
+        settings.voiceJoinChannelId = channel.id;
+        server.update(db)
+            .then(
+                () => {
+                    console.debug(`Set voice channel "${channel.name}" as voice join channel on server "${channel.guild.name}"`);
+                    msg.reply("Linked voice channel");
+                },
+                err => msg.reply(`Something went wrong: ${err}`)
+            );
     }
 }

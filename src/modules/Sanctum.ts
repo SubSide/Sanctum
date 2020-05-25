@@ -13,11 +13,35 @@ export class Sanctum extends AbstractModule {
     }
 
 
-    handleCommand(db: Db, server: Server, message: Discord.Message, cmd: Command, args: String[]) {
+    handleCommand(db: Db, server: Server, message: Discord.Message, cmd: Command, args: string[]) {
         if (cmd.command !== 'sanctum') return;
 
         if (args.length < 1) {
+            this.showHelp(server, message);
             return;
         }
+
+        switch (args[0]) {
+            case 'prefix':
+                this.handlePrefix(db, server, message, cmd, args);
+                return;
+        }
+        
+        this.showHelp(server, message);
+    }
+
+    showHelp(server: Server, message: Discord.Message) {
+        message.reply(`Use "${server.prefix}sanctum prefix <prefix>" to change the default prefix to something else`);
+    }
+
+    handlePrefix(db: Db, server: Server, message: Discord.Message, cmd: Command, args: string[]) {
+        if (args.length < 2) {
+            message.reply(`Usage: ${server.prefix}sanctum prefix <prefix>`);
+            return;
+        }
+
+        server.prefix = args[1];
+        server.update(db);
+        message.reply(`Sanctum prefix changed to ${server.prefix}`);
     }
 }
