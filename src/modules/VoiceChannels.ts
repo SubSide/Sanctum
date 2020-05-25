@@ -86,6 +86,19 @@ export class VoiceChannels extends AbstractModule {
         let channelName = args.join(' '); 
         let parentChannel = msg.guild.channels.resolve(settings.voiceCategoryId);
 
+        if (parentChannel == null) {
+            msg.reply('The server admins haven\'t set a voice category yet!');
+            return;
+        }
+
+        if (!msg.guild.me.permissionsIn(parentChannel).has(
+            Discord.Permissions.FLAGS.MANAGE_CHANNELS |
+            Discord.Permissions.FLAGS.MOVE_MEMBERS
+        )) {
+            msg.reply(`Whoops, I need the 'Manage channels' and 'Move members' permissions for the category "${parentChannel.name}"`);
+            return;
+        }
+
         msg.guild.channels.create(channelName, { 
             type: 'voice',
             parent: parentChannel
